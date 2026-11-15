@@ -65,7 +65,7 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .cap-eyebrow { font: 600 clamp(11px, 1.7vh, 18px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245, 240, 225, 0.5); }
 .cap-sub { font: 400 clamp(14px, 2.5vh, 28px)/1.3 var(--sans); color: rgba(245, 240, 225, 0.66); text-wrap: balance; }
 .cap-url { margin-top: 1.6vh; font: 600 clamp(14px, 2.5vh, 28px) var(--sans); letter-spacing: -0.01em; color: var(--amber); overflow-wrap: anywhere; }
-.cap-qr { margin-top: 2.2vh; width: clamp(110px, 21vh, 220px); aspect-ratio: 1; padding: 1.1vh; border-radius: 1.6vh; background: #fff; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); }
+.cap-qr { margin-top: 2.2vh; width: min(100%, clamp(170px, 36vh, 400px)); aspect-ratio: 1; padding: 1.1vh; border-radius: 1.6vh; background: #fff; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); }
 .cap-qr img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
 /* Not wide enough for captions at the sides: put them above the phones. */
 @media (max-aspect-ratio: 1499/1000), (max-width: 1099px) {

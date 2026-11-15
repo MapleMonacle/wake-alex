@@ -27,7 +27,7 @@ function Stage() {
         <h2>Everyone else's phone</h2>
         <p className="cap-sub">One press per person.</p>
         <div className="cap-qr">
-          <QR url={location.origin} size={180} />
+          <QR url={location.origin} size={480} />
         </div>
         <p className="cap-url">{location.host}</p>
       </div>
