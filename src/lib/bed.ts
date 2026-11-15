@@ -22,17 +22,19 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
   return data;
 }
 
+const owner = () => ({ "x-owner-key": ownerKey() ?? "", "content-type": "application/json" });
+
 export const api = {
   state: () => call<BedState>("/api/state"),
-  wake: (id: string) =>
-    call<BedState & { you: boolean }>("/api/wake", {
+  disappoint: (id: string) =>
+    call<BedState & { you: boolean }>("/api/disappoint", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ id }),
     }),
   helped: (id: string) => call<{ helped: boolean }>(`/api/helped/${encodeURIComponent(id)}`),
-  sleep: () => call<BedState>("/api/sleep", { method: "POST", headers: { "x-owner-key": ownerKey() ?? "" } }),
-  awake: () => call<BedState>("/api/awake", { method: "POST", headers: { "x-owner-key": ownerKey() ?? "" } }),
+  sleep: (alarmAt: number) => call<BedState>("/api/sleep", { method: "POST", headers: owner(), body: JSON.stringify({ alarmAt }) }),
+  awake: () => call<BedState>("/api/awake", { method: "POST", headers: owner() }),
 };
 
 // Live bed state, polled. `onChange` fires with (previous, next) whenever it changes.
@@ -44,7 +46,14 @@ export function useBed(pollMs = 1000, onChange?: (prev: BedState | null, next: B
 
   const accept = (next: BedState) => {
     const prev = prevRef.current;
-    if (prev && prev.asleep === next.asleep && prev.count === next.count && prev.woke?.at === next.woke?.at) return;
+    if (
+      prev &&
+      prev.asleep === next.asleep &&
+      prev.alarmAt === next.alarmAt &&
+      prev.joins.length === next.joins.length &&
+      prev.woke?.at === next.woke?.at
+    )
+      return;
     prevRef.current = next;
     setState(next);
     cbRef.current?.(prev, next);
@@ -64,11 +73,25 @@ export function useBed(pollMs = 1000, onChange?: (prev: BedState | null, next: B
   return { state, accept };
 }
 
-export function duration(ms: number) {
-  const m = Math.max(0, Math.round(ms / 60000));
-  if (m === 0) return "less than a minute";
-  const h = Math.floor(m / 60);
-  return h ? `${h}h ${m % 60}m` : `${m}m`;
+// Re-render on an interval so clocks and counters stay live.
+export function useNow(ms = 1000) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), ms);
+    return () => clearInterval(id);
+  }, [ms]);
+  return now;
 }
+
+export function duration(ms: number) {
+  const s = Math.max(0, Math.round(ms / 1000));
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${String(s % 60).padStart(2, "0")}s`;
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+}
+
+export const clock = (ts: number) =>
+  new Date(ts).toLocaleTimeString("en-CA", { hour: "numeric", minute: "2-digit", hour12: true });
 
 export const people = (n: number) => (n === 1 ? "1 person" : `${n.toLocaleString()} people`);
