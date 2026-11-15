@@ -1,12 +1,13 @@
 // Alex's phone. Open /bedroom?key=... once; the key is remembered.
 import { useEffect, useRef, useState } from "react";
 import { startAlarm } from "./lib/alarm";
-import { api, clock, duration, ownerKey, people, useBed, useNow } from "./lib/bed";
+import { api, checkOwner, clock, duration, people, setOwnerKey, useBed, useNow } from "./lib/bed";
 import { ringing, SELF } from "./lib/types";
 import { bestVoice, lineFor, prefetchLine, speakLine, stopSpeaking } from "./lib/voice";
 import { LINE_COUNT, SNOOZE_COUNT, snoozeLine } from "./lib/lines";
 import { AppIcon, Phone } from "./Phone";
 import { TimeWheel } from "./TimeWheel";
+import { Passcode } from "./Passcode";
 
 type Alarm = ReturnType<typeof startAlarm>;
 type Banner = { id: number; text: string };
@@ -33,6 +34,14 @@ let bannerId = 0;
 
 export default function Bedroom({ staged }: { staged?: boolean }) {
   const { state, accept } = useBed(800);
+  // null = checking the saved passcode, true = unlocked, false = show the passcode screen.
+  const [owner, setOwner] = useState<boolean | null>(null);
+  useEffect(() => {
+    checkOwner().then((ok) => {
+      if (!ok) setOwnerKey(null); // a stale or wrong saved code is forgotten
+      setOwner(ok);
+    });
+  }, []);
   const now = useNow(500);
   const [time, setTime] = useState(() => hhmm(Date.now() + 120_000));
   const touched = useRef(false); // has Alex picked a time himself since he last woke?
@@ -274,20 +283,15 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
     return () => clearTimeout(id);
   }, [error]);
 
-  if (!ownerKey())
+  // Locked until the right passcode is in (a saved one is re-checked on load, so a changed
+  // code signs every old device out). Visitors only ever get the passcode screen.
+  if (owner !== true)
     return (
       <Phone dark staged={staged}>
         <main className="screen alarm night">
           <div className="bg bg-night" aria-hidden />
           <div className="scroll">
-            <section className="view center">
-              <AppIcon size={56} />
-              <h1 className="headline">This is Alex's phone.</h1>
-              <p className="lede">You shouldn't be here. The Disappointment Index is over there.</p>
-              <a className="text-link" href="/">
-                Go to the Disappointment Index
-              </a>
-            </section>
+            {owner === false ? <Passcode onUnlock={() => setOwner(true)} /> : <section className="view center" />}
           </div>
         </main>
       </Phone>

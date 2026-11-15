@@ -15,6 +15,26 @@ export function ownerKey(): string | null {
   }
 }
 
+export function setOwnerKey(key: string | null) {
+  try {
+    if (key) localStorage.setItem(OWNER_KEY_STORE, key);
+    else localStorage.removeItem(OWNER_KEY_STORE);
+  } catch {
+    /* storage blocked: the passcode lasts for this page only */
+  }
+}
+
+// Ask the server whether a passcode is right (defaults to the saved one).
+export async function checkOwner(key = ownerKey()): Promise<boolean> {
+  if (!key) return false;
+  try {
+    const r = await fetch("/api/owner", { headers: { "x-owner-key": key } });
+    return r.ok && ((await r.json()) as { ok: boolean }).ok;
+  } catch {
+    return false;
+  }
+}
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, init);
   const data = (await res.json()) as T & { error?: string };

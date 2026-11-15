@@ -316,3 +316,19 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .voices button { border: 0; border-radius: 999px; padding: 8px 12px; font-size: 13.5px; font-weight: 600; background: rgba(255, 255, 255, 0.1); }
 .voices button.use { background: var(--amber); color: #2b1400; }
 .voices button.use:disabled { background: transparent; color: var(--amber); box-shadow: inset 0 0 0 1px var(--amber); }
+
+/* ---------- Passcode (locks Alex's phone) ---------- */
+.passcode { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 34px 0 10px; text-align: center; color: #fff; }
+.pc-title { font: 500 21px var(--sans); letter-spacing: -0.01em; }
+.pc-sub { margin-top: 4px; font-size: 14px; color: rgba(255, 255, 255, 0.55); }
+.pc-dots { display: flex; gap: 18px; margin: 24px 0 34px; }
+.pc-dots i { width: 13px; height: 13px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px rgba(255, 255, 255, 0.9); transition: background 0.12s; }
+.pc-dots i.on { background: #fff; }
+.pc-dots.shake { animation: shake 0.42s; }
+.pc-pad { display: grid; grid-template-columns: repeat(3, 78px); gap: 16px 24px; justify-content: center; }
+.pc-pad button { width: 78px; height: 78px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.14); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transition: background 0.12s; }
+.pc-pad button:active { background: rgba(255, 255, 255, 0.4); }
+.pc-pad .d { font: 400 34px/1 var(--sans); }
+.pc-pad .l { font: 600 10px/1 var(--sans); letter-spacing: 0.16em; opacity: 0.85; min-height: 10px; }
+.pc-pad .pc-del { background: transparent; font: 500 16px var(--sans); }
+.pc-foot { margin-top: auto; padding-top: 22px; font-size: 13px; line-height: 1.35; color: rgba(255, 255, 255, 0.5); max-width: 30ch; }

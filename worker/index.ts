@@ -102,6 +102,9 @@ const isOwner = (env: Env, key: string | undefined) => !env.OWNER_KEY || key ===
 
 app.get("/state", async (c) => c.json(await bed(c.env).state()));
 
+// Is this passcode right? Used by the passcode screen on Alex's phone.
+app.get("/owner", (c) => c.json({ ok: !!c.env.OWNER_KEY && c.req.header("x-owner-key") === c.env.OWNER_KEY }));
+
 app.post("/disappoint", async (c) => {
   const { id } = await c.req.json<{ id?: string }>().catch(() => ({ id: undefined }));
   if (!id || id.length > 64) return c.json({ error: "id required" }, 400);
