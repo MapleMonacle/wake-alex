@@ -32,7 +32,7 @@ let bannerId = 0;
 export default function Bedroom({ staged }: { staged?: boolean }) {
   const { state, accept } = useBed(800);
   const now = useNow(500);
-  const [time, setTime] = useState(() => hhmm(Date.now() + 60_000));
+  const [time, setTime] = useState(() => hhmm(Date.now() + 120_000));
   const [error, setError] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -47,8 +47,13 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   // Back on the alarm screen after waking: suggest a minute from now, not the alarm he
   // just woke from (which would read "rings in 23h 59m").
   useEffect(() => {
-    if (state && !state.asleep) setTime(hhmm(Date.now() + 60_000));
+    if (state && !state.asleep) setTime(hhmm(Date.now() + 120_000));
   }, [state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
+  // If the suggested time slips into the past while the screen sits there, re-suggest
+  // (a time that's more than 23h away just rolled over; nobody sets those on purpose).
+  useEffect(() => {
+    if (state && !state.asleep && nextAt(time) - Date.now() > 23 * 3_600_000) setTime(hhmm(Date.now() + 120_000));
+  }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
   const n = SELF + (state?.joins.length ?? 0);
   nRef.current = n;
 

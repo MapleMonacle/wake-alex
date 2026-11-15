@@ -19,6 +19,7 @@
   --desk: #08080c;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --spring: cubic-bezier(0.3, 1.5, 0.5, 1);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Cfilter id=%27n%27%3E%3CfeTurbulence type=%27fractalNoise%27 baseFrequency=%27.85%27 numOctaves=%273%27 stitchTiles=%27stitch%27/%3E%3CfeColorMatrix type=%27saturate%27 values=%270%27/%3E%3C/filter%3E%3Crect width=%27100%25%27 height=%27100%25%27 filter=%27url(%23n)%27/%3E%3C/svg%3E");
 }
 * { box-sizing: border-box; }
 html, body, #root { min-height: 100%; margin: 0; }
@@ -30,7 +31,7 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 :focus-visible { outline: 2.5px solid currentColor; outline-offset: 3px; }
 
 /* ---------- The simulated phone (laptops / projector only) ---------- */
-.desk { min-height: 100vh; display: grid; place-items: center; background: var(--desk); }
+.desk { min-height: 100vh; display: grid; place-items: center; }
 .phone-slot { position: relative; flex: none; }
 .phone {
   position: absolute; top: 0; left: 0; width: 417px; height: 876px; padding: 12px; transform-origin: 0 0;
@@ -51,36 +52,62 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .sb-light .home-bar { background: #000; opacity: 0.8; }
 
 /* ---------- The stage: both phones, for the projector ---------- */
+/* Feels like a desk, not a slide: warm charcoal, film grain, a pinned dictionary card,
+   handwritten notes with marker arrows, and the QR code taped on like a sticker. */
 .stage-view {
-  min-height: 100vh; display: grid; align-items: center; justify-content: center; column-gap: clamp(28px, 4vw, 72px);
+  position: relative; min-height: 100vh; display: grid; align-items: center; justify-content: center; column-gap: clamp(28px, 4vw, 72px);
   grid-template-columns: minmax(0, 1fr) auto auto minmax(0, 1fr); grid-template-areas: "ca pa pb cb";
-  padding: 0 clamp(20px, 3vw, 56px); background: var(--desk); overflow: hidden;
+  padding: 0 clamp(20px, 3vw, 56px); overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 40%, #1b1816 0%, #0f0d0c 70%, #090807 100%);
 }
+.stage-view::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: var(--grain); background-size: 180px; opacity: 0.09; mix-blend-mode: overlay; z-index: 3; }
+.desk { position: relative; background: radial-gradient(120% 90% at 50% 40%, #1b1816 0%, #0f0d0c 70%, #090807 100%); }
+.desk::after { content: ""; position: absolute; inset: 0; pointer-events: none; background-image: var(--grain); background-size: 180px; opacity: 0.09; mix-blend-mode: overlay; }
 .cap-a { grid-area: ca; text-align: right; }
 .cap-b { grid-area: cb; }
 .phone-a { grid-area: pa; }
 .phone-b { grid-area: pb; }
-.stage-view { position: relative; }
-.stage-title { position: absolute; top: clamp(14px, 3vh, 36px); left: clamp(16px, 2.4vw, 48px); width: min(21vw, 340px); padding: clamp(12px, 2vh, 22px) clamp(14px, 1.6vw, 24px); border-radius: clamp(12px, 1.8vh, 20px); background: #fffdf8; color: #14110d; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); z-index: 2; }
-.stage-title h1 { margin: 0; font: 400 clamp(26px, 5.2vh, 56px)/1 var(--serif); letter-spacing: -0.015em; color: #0d0b08; }
-.stage-title p { margin: 0; font-family: var(--sans); }
-.stage-title .pron { margin-top: 0.6vh; font-size: clamp(11px, 1.7vh, 18px); color: #6d655a; letter-spacing: 0.01em; }
-.stage-title .def { margin-top: 1.1vh; font-size: clamp(12.5px, 2vh, 21px); line-height: 1.35; color: #14110d; font-weight: 500; }
-.stage-title .note { margin-top: 0.9vh; font-size: clamp(10.5px, 1.6vh, 16px); line-height: 1.35; color: #6d655a; }
-.stage-cap { color: var(--moon); min-width: 0; }
-.stage-cap h2 { margin: 0.5vh 0 1.2vh; font: 400 clamp(30px, 6.4vh, 76px)/0.98 var(--serif); letter-spacing: -0.015em; text-wrap: balance; }
-.cap-eyebrow { font: 600 clamp(11px, 1.7vh, 18px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245, 240, 225, 0.5); }
-.cap-sub { font: 400 clamp(14px, 2.5vh, 28px)/1.3 var(--sans); color: rgba(245, 240, 225, 0.66); text-wrap: balance; }
-.cap-url { margin-top: 1.6vh; font: 600 clamp(14px, 2.5vh, 28px) var(--sans); letter-spacing: -0.01em; color: var(--amber); overflow-wrap: anywhere; }
-.cap-qr { margin-top: 2.2vh; width: min(100%, clamp(170px, 36vh, 400px)); aspect-ratio: 1; padding: 1.1vh; border-radius: 1.6vh; background: #fff; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45); }
-.cap-qr img { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+
+/* The dictionary card */
+.stage-title {
+  position: absolute; z-index: 2; top: clamp(18px, 3.6vh, 42px); left: clamp(18px, 2.6vw, 52px); width: min(21vw, 340px);
+  padding: clamp(14px, 2.4vh, 26px) clamp(14px, 1.6vw, 24px) clamp(12px, 2vh, 22px);
+  background: #f3ede1; color: #1a1612; border-radius: 3px; transform: rotate(-1.6deg);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 2px 3px rgba(0, 0, 0, 0.35), 0 22px 40px -12px rgba(0, 0, 0, 0.7);
+}
+.stage-title::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--grain); background-size: 160px; opacity: 0.22; mix-blend-mode: multiply; pointer-events: none; }
+.stage-title h1 { margin: 0; font: 400 clamp(28px, 5.6vh, 60px)/0.95 var(--serif); letter-spacing: -0.01em; color: #120f0c; }
+.stage-title p { margin: 0; }
+.stage-title .pron { margin-top: 0.5vh; font: italic 400 clamp(13px, 2vh, 21px) var(--serif); color: #6b6254; }
+.stage-title .def { margin-top: 1vh; padding-top: 1vh; border-top: 1px solid rgba(26, 22, 18, 0.18); font: 400 clamp(14px, 2.3vh, 24px)/1.28 var(--serif); color: #1a1612; }
+.stage-title .def b { font-weight: 400; color: #8a2a1e; margin-right: 2px; }
+.stage-title .note { margin-top: 0.9vh; font: 400 clamp(12px, 1.8vh, 19px)/1.3 var(--serif); color: #6b6254; }
+.stage-title .sc { font-variant: small-caps; letter-spacing: 0.04em; color: #1a1612; }
+
+/* Washi tape */
+.tape { position: absolute; top: -11px; left: 50%; width: 42%; height: 22px; transform: translateX(-50%) rotate(2deg); background: rgba(232, 220, 188, 0.7); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); z-index: 1; }
+
+/* Captions */
+.stage-cap { position: relative; color: var(--moon); min-width: 0; }
+.stage-cap h2 { margin: 0 0 0.6vh; font: 400 clamp(30px, 6.4vh, 76px)/0.98 var(--serif); letter-spacing: -0.015em; text-wrap: balance; color: #f3ede1; }
+.hand { font: 600 clamp(20px, 3.6vh, 40px)/1.05 "Caveat", "Segoe Print", cursive; color: #f5c46b; transform: rotate(-2deg); transform-origin: left center; }
+.cap-a .hand { transform: rotate(2deg); transform-origin: right center; }
+.scribble { display: block; fill: none; stroke: #f5c46b; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; opacity: 0.95; }
+.arrow-right { width: clamp(70px, 11vh, 130px); margin: 0.6vh 0 0 auto; transform: translateX(14%); }
+.arrow-down { width: clamp(44px, 7vh, 80px); margin: 0.4vh 0 -1vh clamp(20px, 3vw, 60px); }
+
+/* The QR sticker */
+.cap-qr { position: relative; margin-top: 1.2vh; width: min(100%, clamp(170px, 33vh, 380px)); padding: 1.2vh 1.2vh 0.9vh; border-radius: 4px; background: #fffdf8; transform: rotate(1.8deg); box-shadow: 0 2px 3px rgba(0, 0, 0, 0.35), 0 22px 40px -12px rgba(0, 0, 0, 0.7); }
+.cap-qr img { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; }
+.cap-url { margin-top: 0.7vh; text-align: center; font: 500 clamp(11px, 1.7vh, 18px) ui-monospace, "SF Mono", Consolas, monospace; letter-spacing: -0.02em; color: #1a1612; overflow-wrap: anywhere; }
+
 /* Not wide enough for captions at the sides: put them above the phones. */
 @media (max-aspect-ratio: 1499/1000), (max-width: 1099px) {
   .stage-view { grid-template-columns: auto auto; grid-template-areas: "t t" "ca cb" "pa pb"; row-gap: 14px; align-content: center; }
   .cap-a, .cap-b { text-align: center; }
   .stage-cap h2 { font-size: clamp(22px, 4vh, 40px); margin: 2px 0 0; }
-  .cap-sub, .cap-url, .cap-qr { display: none; }
-  .stage-title { position: static; grid-area: t; justify-self: center; width: min(92vw, 760px); text-align: center; margin-bottom: 6px; }
+  .hand, .scribble, .cap-qr { display: none; }
+  .stage-title { position: relative; grid-area: t; justify-self: center; width: min(92vw, 760px); text-align: center; margin: 10px 0 6px; transform: rotate(-0.6deg); }
   .stage-title .note { display: none; }
 }
 
@@ -97,17 +124,12 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .day { color: var(--ink); --muted: rgba(27, 23, 18, 0.64); --faint: rgba(27, 23, 18, 0.46); --card: rgba(255, 255, 255, 0.66); --line: rgba(27, 23, 18, 0.1); --dot: #fff; }
 .screen { transition: color 0.9s ease; }
 .night .bg-night, .day .bg-day { opacity: 1; }
-/* Night: a deep sky that lightens toward the horizon, with a handful of stars. */
-.bg-night {
-  background:
-    radial-gradient(1.6px 1.6px at 14% 9%, rgba(245, 240, 225, 0.8), transparent), radial-gradient(1px 1px at 31% 21%, rgba(245, 240, 225, 0.6), transparent),
-    radial-gradient(1.4px 1.4px at 86% 13%, rgba(245, 240, 225, 0.7), transparent), radial-gradient(1px 1px at 68% 29%, rgba(245, 240, 225, 0.5), transparent),
-    radial-gradient(1px 1px at 8% 38%, rgba(245, 240, 225, 0.45), transparent), radial-gradient(1.4px 1.4px at 93% 44%, rgba(245, 240, 225, 0.5), transparent),
-    radial-gradient(1px 1px at 47% 6%, rgba(245, 240, 225, 0.5), transparent), radial-gradient(1px 1px at 76% 58%, rgba(245, 240, 225, 0.3), transparent),
-    linear-gradient(180deg, var(--night-0) 0%, var(--night-1) 58%, var(--night-2) 100%);
-}
+/* Night: a dark bedroom, lit faintly from below by a screen. Grain instead of fake stars. */
+.bg-night { background: radial-gradient(130% 60% at 50% 105%, #2b2f52 0%, rgba(31, 34, 64, 0.6) 40%, rgba(12, 13, 26, 0) 80%), linear-gradient(180deg, #0b0c17 0%, #12142a 100%); }
 /* Day: paper, with the sun coming up from below. */
 .bg-day { background: radial-gradient(120% 46% at 50% 108%, #ffc56e 0%, rgba(255, 215, 150, 0.55) 45%, rgba(246, 241, 231, 0) 100%), var(--paper); }
+.bg::after { content: ""; position: absolute; inset: 0; background-image: var(--grain); background-size: 160px; opacity: 0.1; mix-blend-mode: overlay; }
+.bg-day::after { mix-blend-mode: multiply; opacity: 0.08; }
 
 /* ---------- Shared pieces ---------- */
 .nav { display: flex; align-items: center; gap: 10px; min-height: 36px; }
@@ -123,7 +145,7 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .view { flex: 1; display: flex; flex-direction: column; animation: view-in 0.6s var(--ease) both; }
 .view.center { align-items: center; justify-content: center; text-align: center; gap: 14px; padding-bottom: 40px; }
 @keyframes view-in { from { opacity: 0; transform: translateY(14px); } }
-.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); }
+.eyebrow { font: italic 400 18px/1.1 var(--serif); letter-spacing: 0; color: var(--muted); }
 .headline { font: 400 50px/0.98 var(--serif); letter-spacing: -0.02em; text-wrap: balance; }
 .lede { font-size: 17px; line-height: 1.4; color: var(--muted); text-wrap: pretty; max-width: 34ch; }
 .text-link { margin-top: 6px; font-size: 16px; font-weight: 600; color: var(--amber); text-underline-offset: 3px; }
@@ -144,7 +166,7 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .cta {
   width: 100%; height: 58px; border: 0; border-radius: 29px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font: 600 18px var(--sans); letter-spacing: -0.015em; color: #fff; background: var(--red);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 12px 26px -10px rgba(240, 65, 47, 0.75);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.12), 0 2px 0 rgba(0, 0, 0, 0.22);
   transition: transform 0.18s var(--ease), filter 0.18s, background 0.35s, box-shadow 0.35s, color 0.35s;
 }
 .cta:active:not(:disabled) { transform: scale(0.965); filter: brightness(0.88); }
