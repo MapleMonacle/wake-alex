@@ -81,8 +81,8 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
           ? `Someone is disappointed in you in advance. ${joins} waiting.`
           : `${fresh} more people are disappointed in you in advance. ${joins} waiting.`
         : fresh === 1
-          ? `Someone new is disappointed in you. That makes ${total}.`
-          : `${fresh} more people are disappointed in you. That makes ${total}.`;
+          ? `Someone new is disappointed in you for sleeping in. That makes ${total}.`
+          : `${fresh} more people are disappointed in you for sleeping in. That makes ${total}.`;
       setBanners((b) => [{ id, text }, ...b].slice(0, 2));
       setTimeout(() => setBanners((b) => b.filter((x) => x.id !== id)), 4500);
       try {
@@ -346,7 +346,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
                         {n.toLocaleString()}
                       </span>
                     </p>
-                    <p className="ring-label">{n === 1 ? "person disappointed in you" : "people disappointed in you"}</p>
+                    <p className="ring-label">{n === 1 ? "person is disappointed in you for sleeping in" : "people are disappointed in you for sleeping in"}</p>
                     <p className="ring-sub">{n === 1 ? "It's you." : "One of them is you."}</p>
                   </div>
 

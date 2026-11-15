@@ -159,7 +159,7 @@ function Live({ state, now, mine, onDisappoint }: { state: BedState; now: number
             {n.toLocaleString()}
           </span>
         </p>
-        <p className="hero-label">{n === 1 ? "person disappointed in Alex" : "people disappointed in Alex"}</p>
+        <p className="hero-label">{n === 1 ? "person is disappointed in Alex for sleeping in" : "people are disappointed in Alex for sleeping in"}</p>
         <p className="hero-sub">{n === 1 ? "It's Alex." : "One of them is Alex."}</p>
       </div>
 

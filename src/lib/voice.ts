@@ -57,7 +57,7 @@ const SOLO = [
   "Is that a pillow I see? Drop it! Nobody else knows you're failing yet! Fix that!",
 ];
 const CROWD = [
-  (n: number) => `Wake up! ${n} people are disappointed in you!`,
+  (n: number) => `Wake up! ${n} people are disappointed in you for sleeping in!`,
   (n: number) => `On your feet! ${n} people are watching you fail! Live!`,
   (n: number) => `Did anyone say you could sleep in? ${n} people say no! Move!`,
   (n: number) => `Move it, move it, move it! ${n} people are waiting on you!`,
