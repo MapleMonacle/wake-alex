@@ -66,6 +66,7 @@ export function useBed(pollMs = 1000, onChange?: (prev: BedState | null, next: B
 
 export function duration(ms: number) {
   const m = Math.max(0, Math.round(ms / 60000));
+  if (m === 0) return "less than a minute";
   const h = Math.floor(m / 60);
   return h ? `${h}h ${m % 60}m` : `${m}m`;
 }

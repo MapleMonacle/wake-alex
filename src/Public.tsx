@@ -85,7 +85,9 @@ function Awake({ state, party }: { state: BedState; party: { count: number; help
           <h1 className="big">Alex is awake.</h1>
           <p className="lede">
             {party.helped
-              ? `You did it. You and ${people(Math.max(0, party.count - 1))} woke him up.`
+              ? party.count <= 1
+                ? "You did it. You woke him up all by yourself."
+                : `You did it. You and ${people(party.count - 1)} woke him up.`
               : `${people(party.count)} woke him up. You were not one of them.`}
           </p>
         </>
