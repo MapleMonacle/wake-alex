@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "./styles.css";
 import Public from "./Public";
 import Bedroom from "./Bedroom";
+import { QR } from "./kit/QR";
 
 // /         everyone: the Disappointment Index
 // /bedroom  Alex's phone (needs ?key= once)
@@ -25,6 +26,9 @@ function Stage() {
         <p className="cap-eyebrow">The public</p>
         <h2>Everyone else's phone</h2>
         <p className="cap-sub">One press per person.</p>
+        <div className="cap-qr">
+          <QR url={location.origin} size={180} />
+        </div>
         <p className="cap-url">{location.host}</p>
       </div>
     </div>
