@@ -13,8 +13,8 @@ Meanwhile my phone is going off. A loud alarm gets faster with every new person,
 ## Pages
 
 - `/`: the Disappointment Index (everyone)
-- `/bedroom?key=…`: Alex's phone (alarm, voice, notifications, snooze that refuses)
-- `/stage?key=…`: both phones side by side, for the projector
+- `/bedroom`: Alex's phone (passcode-locked: alarm, voice, notifications, snooze that refuses)
+- `/stage`: both phones side by side, for the projector (Alex's phone asks for the passcode)
 
 On a laptop each page renders inside a simulated phone; on a real phone it's full screen.
 
