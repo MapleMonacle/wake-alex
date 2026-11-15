@@ -275,9 +275,10 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
                   Go to sleep
                 </button>
                 <div className="quick">
-                  <span>Or nap:</span>
-                  <button onClick={() => goToSleep(Date.now() + 10_000)}>Ring in 10s</button>
-                  <button onClick={() => goToSleep(Date.now() + 60_000)}>Ring in 1 min</button>
+                  <span>Ring in</span>
+                  <button onClick={() => goToSleep(Date.now() + 10_000)}>10s</button>
+                  <button onClick={() => goToSleep(Date.now() + 30_000)}>30s</button>
+                  <button onClick={() => goToSleep(Date.now() + 60_000)}>1 min</button>
                 </div>
                 <p className="setter-note">
                   {state.woke && state.woke.count > 0
