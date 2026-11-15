@@ -1,0 +1,50 @@
+:root {
+  --bg: #fffdf5;
+  --fg: #161616;
+  --muted: #6b6b6b;
+  --card: #ffffff;
+  --line: #e6e1d3;
+  --accent: #e10600;
+  color-scheme: light dark;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121212;
+    --fg: #f2f2f2;
+    --muted: #9a9a9a;
+    --card: #1c1c1c;
+    --line: #2e2e2e;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--fg); }
+a { color: var(--accent); }
+h1 { margin: 0 0 4px; font-size: clamp(28px, 5vw, 48px); letter-spacing: -0.02em; }
+h2 { margin: 0; font-size: 18px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.huge { font-size: 72px; font-weight: 900; margin: 16px 0 0; font-variant-numeric: tabular-nums; }
+button, input, textarea {
+  font: inherit; color: inherit; background: var(--card);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px;
+}
+button:not([style]) { cursor: pointer; }
+button:not([style]):hover { border-color: var(--fg); }
+textarea, input { width: 100%; }
+pre { background: var(--bg); padding: 8px; border-radius: 8px; overflow: auto; font-size: 12px; }
+
+.center { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; padding: 24px 16px; max-width: 1200px; margin: 0 auto; }
+.span { grid-column: 1 / -1; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
+.card .body { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 12px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.row input { flex: 1; width: auto; }
+.out { white-space: pre-wrap; margin: 0; }
+.meter { width: 100%; height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; }
+.meter > div { height: 100%; transition: width 60ms; }
+/* The video sets the box size, so an overlay at inset:0 lines up exactly. */
+.cam { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
+.cam video { display: block; width: 100%; height: auto; }
+select { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
