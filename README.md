@@ -1,54 +1,36 @@
-# wake-alex
+# Wake Alex Up
 
-> One sentence that makes a judge laugh. ("Uber, but every driver is a goose.")
+> Alex is a clinomaniac. He needs your help. Or at least your disappointment.
 
-**Live:** https://PROJECT.YOUR-SUBDOMAIN.workers.dev · **Demo video (≤1 min):** LINK · **Track:** stupidest ___
+**Track:** stupidest button · Built at Stupid Ideas Hackathon Ottawa, Nov 15 2026
 
-![hero screenshot](docs/hero.png)
+Wake Alex Up is an alarm clock you can't snooze, because it isn't yours. **Anyone on the internet can press one button to wake Alex up.** Every press adds a person to the count, and Alex's phone plays a siren and announces, louder and louder:
 
-## What it does
+> "WAKE UP! 23 PEOPLE ARE DISAPPOINTED IN YOU FOR SLEEPING IN. YOU ARE DISAPPOINTING THEM ALL."
 
-Two or three sentences. What's the problem nobody has, and how do we solve it?
-
-## Why
-
-The fake-serious justification. Commit to the bit.
+When Alex finally presses **I'm awake**, everyone who helped is told they did it: "Alex is awake. You did it. You and 22 people woke him up." People who didn't help are told that too.
 
 ## How it works
 
-- Front end: React + Vite
-- Back end: Hono on Cloudflare Workers, with a Durable Object for the shared counter
-- The stupid part: what's technically doing the stupid thing (e.g. MediaPipe hand tracking, Claude, Web Audio)
-
-## What I learned
-
-The skill or concept I tried for the first time today, what was hard, and what surprised me. (The organizers judge "learning > flexing".)
-
-## Track
-
-**stupidest ___**: one line on why this fits. (Pick ONE of AI / API / metric / button, or none.)
+- **One button, one shared state.** A Cloudflare Durable Object holds whether Alex is asleep and who's disappointed in him. Each browser gets an anonymous id, so the count is *people*, not clicks.
+- **The bedroom** (`/bedroom`, protected by a private key) is Alex's phone. The siren (Web Audio) gets louder and more frantic with the crowd, and the browser's speech synthesis reads the latest count over and over until he's up. It keeps the screen awake with the Wake Lock API.
+- **The public page** polls every second. When Alex wakes, every open tab flips to the morning screen, fires confetti, and sends a browser notification if you allowed one.
+- Stack: React + Vite, Hono on Cloudflare Workers, Durable Objects. No AI; just people.
 
 ## Who did what
 
-| Person | What they built |
+| Person | What |
 | --- | --- |
-| Alexander Rigas (@discord-handle) | ... |
-|  |  |
-
-## Screenshots
-
-| | |
-| --- | --- |
-| ![](docs/1.png) | ![](docs/2.png) |
+| Alexander Rigas (@DISCORD) | Idea (lived experience), design direction, built it with Claude Code |
 
 ## Running it
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars   # add ANTHROPIC_API_KEY if using the AI bits
-npm run dev
+echo OWNER_KEY=something-secret > .dev.vars
+npm run dev   # public page at /, bedroom at /bedroom?key=something-secret
 ```
 
 ## Disclosure
 
-The first commit is a starter kit prepared before the event. It contains tooling only (dev server, deploy config, reusable hooks for sound, webcam, mic, a shared counter and shared room state) and no project code. Everything after it was built at Stupid Ideas Hackathon Ottawa on Nov 15, 2026.
+The first commit is a starter kit prepared before the event: dev server, deploy config, and generic helpers, with no project code. Everything after it was built at the hackathon.

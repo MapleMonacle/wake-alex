@@ -12,9 +12,6 @@
     "fresh": "node scripts/fresh.mjs"
   },
   "dependencies": {
-    "@amplitude/analytics-browser": "^2.49.2",
-    "@anthropic-ai/sdk": "^1.6.0",
-    "@mediapipe/tasks-vision": "^1.2.2",
     "canvas-confetti": "^1.9.4",
     "hono": "^4.13.17",
     "qrcode": "^1.5.4",

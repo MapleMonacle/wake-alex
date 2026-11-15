@@ -1,50 +1,78 @@
 :root {
-  --bg: #fffdf5;
-  --fg: #161616;
-  --muted: #6b6b6b;
-  --card: #ffffff;
-  --line: #e6e1d3;
-  --accent: #e10600;
-  color-scheme: light dark;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #121212;
-    --fg: #f2f2f2;
-    --muted: #9a9a9a;
-    --card: #1c1c1c;
-    --line: #2e2e2e;
-  }
+  --night: #0d1024;
+  --night-2: #171b3a;
+  --moon: #f3eed9;
+  --star: rgba(243, 238, 217, 0.7);
+  --alarm: #ff4d3d;
+  --day: #fff4e2;
+  --day-2: #ffd9a8;
+  --sun: #ff8a1f;
+  --ink: #241a10;
+  --display: "Fraunces", Georgia, serif;
+  --sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--fg); }
-a { color: var(--accent); }
-h1 { margin: 0 0 4px; font-size: clamp(28px, 5vw, 48px); letter-spacing: -0.02em; }
-h2 { margin: 0; font-size: 18px; }
-.muted { color: var(--muted); }
-.small { font-size: 12px; }
-.huge { font-size: 72px; font-weight: 900; margin: 16px 0 0; font-variant-numeric: tabular-nums; }
-button, input, textarea {
-  font: inherit; color: inherit; background: var(--card);
-  border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px;
-}
-button:not([style]) { cursor: pointer; }
-button:not([style]):hover { border-color: var(--fg); }
-textarea, input { width: 100%; }
-pre { background: var(--bg); padding: 8px; border-radius: 8px; overflow: auto; font-size: 12px; }
+html, body, #root { height: 100%; margin: 0; }
+body { font-family: var(--sans); -webkit-font-smoothing: antialiased; background: var(--night); }
+button { font: inherit; cursor: pointer; }
 
-.center { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 16px; text-align: center; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 16px; padding: 24px 16px; max-width: 1200px; margin: 0 auto; }
-.span { grid-column: 1 / -1; }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 4px; }
-.card .body { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-top: 12px; }
-.row { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
-.row input { flex: 1; width: auto; }
-.out { white-space: pre-wrap; margin: 0; }
-.meter { width: 100%; height: 14px; border-radius: 7px; background: var(--line); overflow: hidden; }
-.meter > div { height: 100%; transition: width 60ms; }
-/* The video sets the box size, so an overlay at inset:0 lines up exactly. */
-.cam { position: relative; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
-.cam video { display: block; width: 100%; height: auto; }
-select { font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px; }
+main { min-height: 100%; display: flex; flex-direction: column; align-items: center; padding: 24px 16px; transition: background 1.2s ease, color 1.2s ease; position: relative; overflow: hidden; }
+.night { background: radial-gradient(ellipse at 50% -10%, #2a2f66 0%, var(--night-2) 35%, var(--night) 75%); color: var(--moon); }
+.day { background: radial-gradient(ellipse at 50% 110%, var(--day-2) 0%, var(--day) 55%); color: var(--ink); }
+.loading { background: var(--night); }
+
+/* a few stars at night */
+.night::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.6;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, var(--star), transparent),
+    radial-gradient(1px 1px at 28% 72%, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 44% 12%, var(--star), transparent),
+    radial-gradient(1px 1px at 63% 34%, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 81% 22%, var(--star), transparent),
+    radial-gradient(1px 1px at 90% 66%, var(--star), transparent),
+    radial-gradient(1px 1px at 8% 84%, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 72% 88%, var(--star), transparent);
+}
+
+.brand { align-self: stretch; display: flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: 0.02em; font-size: 15px; opacity: 0.85; z-index: 1; }
+.logo { font-size: 20px; }
+
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; text-align: center; max-width: 720px; z-index: 1; }
+.status { margin: 0; font-size: clamp(18px, 2.4vw, 24px); opacity: 0.85; }
+.status b { font-weight: 600; }
+
+/* The button */
+.wake {
+  width: min(320px, 70vw); aspect-ratio: 1; border-radius: 50%; border: 0;
+  background: radial-gradient(circle at 35% 30%, #ff8a7c, var(--alarm) 55%, #b3170d);
+  color: #fff; font: 700 clamp(26px, 4vw, 38px)/1.05 var(--display); letter-spacing: -0.01em;
+  box-shadow: 0 14px 0 #7a0f08, 0 30px 80px rgba(255, 77, 61, 0.35);
+  transition: transform 80ms, box-shadow 80ms, filter 200ms;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+.wake:active:not(:disabled) { transform: translateY(12px); box-shadow: 0 2px 0 #7a0f08, 0 10px 30px rgba(255, 77, 61, 0.3); }
+.wake.done { animation: none; filter: saturate(0.35) brightness(0.8); cursor: default; font-size: clamp(20px, 3vw, 28px); }
+@keyframes pulse { 50% { box-shadow: 0 14px 0 #7a0f08, 0 30px 120px rgba(255, 77, 61, 0.6); } }
+
+.count { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.count .n { font: 700 clamp(64px, 12vw, 132px)/1 var(--display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.count .label { font-size: clamp(16px, 2.2vw, 22px); opacity: 0.8; }
+.hint { margin: 0; font-size: 14px; opacity: 0.6; max-width: 420px; }
+.foot { font-size: 13px; opacity: 0.5; text-align: center; z-index: 1; }
+
+.big { margin: 0; font: 700 clamp(48px, 9vw, 104px)/1 var(--display); letter-spacing: -0.03em; }
+.lede { margin: 0; font-size: clamp(20px, 2.8vw, 28px); max-width: 640px; line-height: 1.35; }
+
+/* Bedroom */
+.bedroom .stage { gap: 32px; }
+.awake-btn, .sleep-btn {
+  border: 0; border-radius: 999px; padding: 22px 48px; font: 700 clamp(22px, 3vw, 30px) var(--display);
+  transition: transform 80ms;
+}
+.awake-btn:active, .sleep-btn:active { transform: scale(0.97); }
+.awake-btn { background: var(--sun); color: #2b1400; box-shadow: 0 10px 40px rgba(255, 138, 31, 0.45); }
+.sleep-btn { background: var(--night-2); color: var(--moon); box-shadow: 0 10px 40px rgba(13, 16, 36, 0.35); }
+.ringing { animation: ring 0.9s ease-in-out infinite; }
+@keyframes ring { 50% { background-color: #3a0d12; box-shadow: inset 0 0 220px rgba(255, 77, 61, 0.45); } }
+.error { position: absolute; bottom: 16px; color: var(--alarm); font-size: 14px; }
