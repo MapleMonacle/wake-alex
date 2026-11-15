@@ -61,11 +61,12 @@ p, h1, h2, dl, dd, figure { margin: 0; }
 .phone-a { grid-area: pa; }
 .phone-b { grid-area: pb; }
 .stage-view { position: relative; }
-.stage-title { position: absolute; top: clamp(16px, 3.4vh, 40px); left: clamp(20px, 3vw, 56px); max-width: min(30vw, 420px); color: var(--moon); z-index: 2; }
-.stage-title h1 { margin: 0; font: 400 clamp(30px, 6vh, 64px)/1 var(--serif); letter-spacing: -0.015em; }
-.stage-title p { margin: 0.8vh 0 0; font: 400 clamp(13px, 2.1vh, 22px)/1.35 var(--sans); color: rgba(245, 240, 225, 0.6); }
-.stage-title .pron { letter-spacing: 0.01em; }
-.stage-title .def { margin-top: 0.4vh; color: rgba(245, 240, 225, 0.85); }
+.stage-title { position: absolute; top: clamp(14px, 3vh, 36px); left: clamp(16px, 2.4vw, 48px); width: min(21vw, 340px); padding: clamp(12px, 2vh, 22px) clamp(14px, 1.6vw, 24px); border-radius: clamp(12px, 1.8vh, 20px); background: #fffdf8; color: #14110d; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.5); z-index: 2; }
+.stage-title h1 { margin: 0; font: 400 clamp(26px, 5.2vh, 56px)/1 var(--serif); letter-spacing: -0.015em; color: #0d0b08; }
+.stage-title p { margin: 0; font-family: var(--sans); }
+.stage-title .pron { margin-top: 0.6vh; font-size: clamp(11px, 1.7vh, 18px); color: #6d655a; letter-spacing: 0.01em; }
+.stage-title .def { margin-top: 1.1vh; font-size: clamp(12.5px, 2vh, 21px); line-height: 1.35; color: #14110d; font-weight: 500; }
+.stage-title .note { margin-top: 0.9vh; font-size: clamp(10.5px, 1.6vh, 16px); line-height: 1.35; color: #6d655a; }
 .stage-cap { color: var(--moon); min-width: 0; }
 .stage-cap h2 { margin: 0.5vh 0 1.2vh; font: 400 clamp(30px, 6.4vh, 76px)/0.98 var(--serif); letter-spacing: -0.015em; text-wrap: balance; }
 .cap-eyebrow { font: 600 clamp(11px, 1.7vh, 18px) var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(245, 240, 225, 0.5); }
@@ -79,8 +80,8 @@ p, h1, h2, dl, dd, figure { margin: 0; }
   .cap-a, .cap-b { text-align: center; }
   .stage-cap h2 { font-size: clamp(22px, 4vh, 40px); margin: 2px 0 0; }
   .cap-sub, .cap-url, .cap-qr { display: none; }
-  .stage-title { position: static; grid-area: t; text-align: center; max-width: none; margin-bottom: 6px; }
-  .stage-title p { display: inline; margin-left: 10px; }
+  .stage-title { position: static; grid-area: t; justify-self: center; width: min(92vw, 760px); text-align: center; margin-bottom: 6px; }
+  .stage-title .note { display: none; }
 }
 
 /* ---------- A screen ---------- */

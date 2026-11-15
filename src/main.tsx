@@ -13,10 +13,17 @@ function Stage() {
     <div className="stage-view">
       <header className="stage-title">
         <h1>Clinomania</h1>
-        <p>
-          <span className="pron">/ˌklaɪ.noʊˈmeɪ.ni.ə/</span> <i>noun</i>
+        <p className="pron">
+          /ˌklaɪ.noʊˈmeɪ.ni.ə/ · <i>noun</i>
         </p>
-        <p className="def">An excessive desire to stay in bed.</p>
+        <p className="def">
+          An excessive, often overpowering desire to stay in bed, making it a daily struggle to get up, even after enough
+          sleep.
+        </p>
+        <p className="note">
+          Not a medical diagnosis, but often linked to depression, burnout or chronic fatigue. From Greek <i>klinē</i>{" "}
+          (bed) + <i>mania</i> (madness).
+        </p>
       </header>
       <div className="stage-cap cap-a">
         <p className="cap-eyebrow">The bedroom</p>
