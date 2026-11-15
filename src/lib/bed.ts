@@ -36,9 +36,9 @@ export function setOwnerKey(key: string | null) {
 
 // Ask the server whether a passcode is right (defaults to the saved one).
 export async function checkOwner(key = ownerKey()): Promise<boolean> {
-  if (!key) return false;
   try {
-    const r = await fetch("/api/owner", { headers: { "x-owner-key": key } });
+    // Always ask: when the passcode is turned off, the server says yes even without a key.
+    const r = await fetch("/api/owner", { headers: key ? { "x-owner-key": key } : {} });
     return r.ok && ((await r.json()) as { ok: boolean }).ok;
   } catch {
     return false;
