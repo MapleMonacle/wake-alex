@@ -74,8 +74,13 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       seenJoins.current = joins;
       const id = ++bannerId;
       const total = SELF + joins;
-      const text =
-        fresh === 1
+      // Before the alarm, people are getting their disappointment in early.
+      const early = state.alarmAt !== null && Date.now() < state.alarmAt;
+      const text = early
+        ? fresh === 1
+          ? `Someone is disappointed in you in advance. ${joins} waiting.`
+          : `${fresh} more people are disappointed in you in advance. ${joins} waiting.`
+        : fresh === 1
           ? `Someone new is disappointed in you. That makes ${total}.`
           : `${fresh} more people are disappointed in you. That makes ${total}.`;
       setBanners((b) => [{ id, text }, ...b].slice(0, 2));
@@ -297,6 +302,11 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
                     <span>{clock(state.alarmAt!)}</span>
                     <span className="chip-in">in {duration(state.alarmAt! - now)}</span>
                   </p>
+                  {state.joins.length > 0 && (
+                    <p className="alarm-chip waiting-chip">
+                      <span>{people(state.joins.length)} already disappointed</span>
+                    </p>
+                  )}
                   {!armed && (
                     <button className="arm-btn" onClick={arm}>
                       Sound is off. Tap to turn the alarm on.

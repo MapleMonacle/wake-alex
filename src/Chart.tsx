@@ -24,10 +24,12 @@ export function DisappointmentChart({ alarmAt, joins, end, live }: { alarmAt: nu
   const y = (n: number) => H - PAD.b - (n / yMax) * (H - PAD.t - PAD.b);
   const countAt = (t: number) => SELF + shown.filter((j) => j <= t).length;
 
-  // Step path: flat, then up at each join.
-  let d = `M${x(alarmAt)},${y(SELF)}`;
-  shown.forEach((j, i) => {
-    d += ` H${x(j).toFixed(1)} V${y(SELF + i + 1).toFixed(1)}`;
+  // Step path: starts at Alex + everyone who was disappointed in advance, then steps up at each join.
+  const pre = shown.filter((j) => j <= alarmAt).length;
+  const start = SELF + pre;
+  let d = `M${x(alarmAt)},${y(start)}`;
+  shown.slice(pre).forEach((j, i) => {
+    d += ` H${x(j).toFixed(1)} V${y(start + i + 1).toFixed(1)}`;
   });
   d += ` H${x(t1)}`;
   const area = `${d} V${y(0)} H${x(alarmAt)} Z`;
@@ -59,7 +61,7 @@ export function DisappointmentChart({ alarmAt, joins, end, live }: { alarmAt: nu
         ref={ref}
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Step chart: ${total} ${total === 1 ? "person" : "people"} disappointed by ${clock(t1)}, starting from 1 at ${clock(alarmAt)}.`}
+        aria-label={`Step chart: ${total} ${total === 1 ? "person" : "people"} disappointed by ${clock(t1)}, starting from ${start} at ${clock(alarmAt)}`}
         onPointerDown={onMove}
         onPointerMove={onMove}
         onPointerLeave={clear}

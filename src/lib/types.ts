@@ -21,7 +21,12 @@ export function ringing(s: Pick<BedState, "asleep" | "alarmAt">, now = Date.now(
 }
 
 // Total disappointment, in person-minutes: him since the alarm, plus each person since they joined.
+// People who were disappointed in advance only start counting when the alarm actually goes off.
 export function personMinutes(alarmAt: number, joins: number[], until: number) {
-  const ms = Math.max(0, until - alarmAt) + joins.reduce((sum, t) => sum + Math.max(0, until - t), 0);
+  const since = (t: number) => Math.max(0, until - Math.max(t, alarmAt));
+  const ms = since(alarmAt) + joins.reduce((sum, t) => sum + since(t), 0);
   return ms / 60000;
 }
+
+// How many people were waiting, disappointed in advance, when the alarm went off.
+export const inAdvance = (alarmAt: number, joins: number[]) => joins.filter((t) => t <= alarmAt).length;

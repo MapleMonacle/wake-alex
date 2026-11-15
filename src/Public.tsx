@@ -59,7 +59,7 @@ export default function Public({ staged }: { staged?: boolean }) {
   }, [alarmAt]);
 
   async function disappoint() {
-    if (!state || !ringing(state) || mine) return;
+    if (!state?.asleep || mine) return; // before the alarm counts too: disappointment in advance
     setMine(true);
     try {
       navigator.vibrate?.(12);
@@ -94,7 +94,7 @@ export default function Public({ staged }: { staged?: boolean }) {
           </header>
 
           {!state && <Loading />}
-          {state?.asleep && !isRinging && <Waiting key="waiting" state={state} now={now} />}
+          {state?.asleep && !isRinging && <Waiting key="waiting" state={state} now={now} mine={mine} onDisappoint={disappoint} />}
           {state && isRinging && <Live key="live" state={state} now={now} mine={mine} onDisappoint={disappoint} />}
           {state && !state.asleep && <Morning key="morning" state={state} justWoke={justWoke} />}
 
@@ -118,7 +118,8 @@ function Loading() {
   );
 }
 
-function Waiting({ state, now }: { state: BedState; now: number }) {
+function Waiting({ state, now, mine, onDisappoint }: { state: BedState; now: number; mine: boolean; onDisappoint: () => void }) {
+  const waiting = state.joins.length;
   return (
     <section className="view">
       <div className="hero">
@@ -128,14 +129,18 @@ function Waiting({ state, now }: { state: BedState; now: number }) {
         <p className="hero-sub">Set for {clock(state.alarmAt!)}</p>
       </div>
       <div className="cta-block">
-        <button className="cta" disabled>
-          Be disappointed in him
+        <button className={`cta ${mine ? "done" : ""}`} onClick={onDisappoint} disabled={mine}>
+          {mine ? "You're disappointed in advance" : "Be disappointed in advance"}
         </button>
-        <p className="cta-note">Not yet. He might still get up on time.</p>
+        <p className="cta-note">
+          {mine
+            ? "Noted. You'll count the second his alarm goes off."
+            : "Why wait? He's going to sleep in. Get your disappointment in early."}
+        </p>
       </div>
       <dl className="stats">
-        <Row label="Disappointment Index" value="0" />
-        <Row label="Opens at" value={clock(state.alarmAt!)} />
+        <Row label="Disappointed in advance" value={waiting.toLocaleString()} />
+        <Row label="Index when the alarm goes off" value={(SELF + waiting).toLocaleString()} />
       </dl>
     </section>
   );
@@ -173,7 +178,7 @@ function Live({ state, now, mine, onDisappoint }: { state: BedState; now: number
       <dl className="stats">
         <Row label="Overslept by" value={duration(now - state.alarmAt!)} />
         <Row label="Disappointment-minutes" note="people × minutes" value={pm.toFixed(1)} />
-        <Row label="Newest disappointment" value={last ? `${duration(now - last)} ago` : "Nobody yet"} />
+        <Row label="Newest disappointment" value={!last ? "Nobody yet" : last <= state.alarmAt! ? "Before the alarm" : `${duration(now - last)} ago`} />
       </dl>
 
       <DisappointmentChart alarmAt={state.alarmAt!} joins={state.joins} end={now} live />
@@ -183,14 +188,21 @@ function Live({ state, now, mine, onDisappoint }: { state: BedState; now: number
 
 function Morning({ state, justWoke }: { state: BedState; justWoke: boolean }) {
   const w = state.woke;
-  if (!w || w.count === 0)
+  if (!w || w.count === 0) {
+    // He got up before the alarm. Anyone who was disappointed in advance was disappointed for nothing.
+    const early = w ? state.joins.length : 0;
     return (
       <section className="view center">
         <p className="eyebrow">Alex is awake</p>
-        <h1 className="headline">Nobody is disappointed.</h1>
-        <p className="lede">Yet. Check back the next time he sets an alarm.</p>
+        <h1 className="headline">{early ? "He got up on time." : "Nobody is disappointed."}</h1>
+        <p className="lede">
+          {early
+            ? `${people(early)} ${early === 1 ? "was" : "were"} disappointed in advance. For nothing. Check back the next time he sets an alarm.`
+            : "Yet. Check back the next time he sets an alarm."}
+        </p>
       </section>
     );
+  }
   return (
     <section className="view">
       <div className="hero left">

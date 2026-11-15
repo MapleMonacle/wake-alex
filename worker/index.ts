@@ -53,7 +53,8 @@ export class Bed extends DurableObject<Env> {
   // Requests run one at a time per object, so this read-modify-write is safe.
   async disappoint(id: string): Promise<BedState & { you: boolean }> {
     const s = await this.load();
-    if (ringing(s) && !s.people.includes(id) && s.people.length < 5000) {
+    // Allowed any time he is asleep: the audience can be disappointed in advance.
+    if (s.asleep && !s.people.includes(id) && s.people.length < 5000) {
       s.people.push(id);
       s.joins.push(Date.now());
       await this.save(s);
