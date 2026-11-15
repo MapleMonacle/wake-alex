@@ -11,6 +11,13 @@ import { QR } from "./kit/QR";
 function Stage() {
   return (
     <div className="stage-view">
+      <header className="stage-title">
+        <h1>Clinomania</h1>
+        <p>
+          <span className="pron">/ˌklaɪ.noʊˈmeɪ.ni.ə/</span> <i>noun</i>
+        </p>
+        <p className="def">An excessive desire to stay in bed.</p>
+      </header>
       <div className="stage-cap cap-a">
         <p className="cap-eyebrow">The bedroom</p>
         <h2>Alex's phone</h2>

@@ -85,7 +85,7 @@ export function Phone({ children, dark, staged }: { children: ReactNode; dark: b
   let s: number;
   if (staged) {
     const wide = stageIsWide(w, h);
-    const byHeight = (h - (wide ? 56 : 170)) / BODY_H;
+    const byHeight = (h - (wide ? 56 : 220)) / BODY_H; // narrow: title + captions sit above
     const byWidth = (w - (wide ? 720 : 120)) / (BODY_W * 2); // wide: leave room for captions + the QR code
     s = Math.min(byHeight, byWidth);
   } else {
