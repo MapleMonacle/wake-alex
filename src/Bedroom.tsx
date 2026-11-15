@@ -5,6 +5,7 @@ import { api, clock, duration, ownerKey, people, useBed, useNow } from "./lib/be
 import { ringing, SELF } from "./lib/types";
 import { bark, bestVoice, lineFor } from "./lib/voice";
 import { AppIcon, Phone } from "./Phone";
+import { TimeWheel } from "./TimeWheel";
 
 type Alarm = ReturnType<typeof startAlarm>;
 type Banner = { id: number; text: string };
@@ -33,6 +34,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   const { state, accept } = useBed(800);
   const now = useNow(500);
   const [time, setTime] = useState(() => hhmm(Date.now() + 120_000));
+  const touched = useRef(false); // has Alex picked a time himself since he last woke?
   const [error, setError] = useState<string | null>(null);
   const [caption, setCaption] = useState("");
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -47,12 +49,15 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   // Back on the alarm screen after waking: suggest a minute from now, not the alarm he
   // just woke from (which would read "rings in 23h 59m").
   useEffect(() => {
-    if (state && !state.asleep) setTime(hhmm(Date.now() + 120_000));
+    if (state && !state.asleep) {
+      touched.current = false;
+      setTime(hhmm(Date.now() + 120_000));
+    }
   }, [state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
   // If the suggested time slips into the past while the screen sits there, re-suggest
   // (a time that's more than 23h away just rolled over; nobody sets those on purpose).
   useEffect(() => {
-    if (state && !state.asleep && nextAt(time) - Date.now() > 23 * 3_600_000) setTime(hhmm(Date.now() + 120_000));
+    if (state && !state.asleep && !touched.current && nextAt(time) - Date.now() > 23 * 3_600_000) setTime(hhmm(Date.now() + 120_000));
   }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
   const n = SELF + (state?.joins.length ?? 0);
   nRef.current = n;
@@ -268,10 +273,8 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
               </header>
 
               <div className="setter-main">
-                <label className="eyebrow" htmlFor="alarm-time">
-                  Wake me at
-                </label>
-                <input id="alarm-time" className="time-input" type="time" value={time} onChange={(e) => e.target.value && setTime(e.target.value)} />
+                <p className="eyebrow">Set alarm</p>
+                <TimeWheel value={time} onChange={(v) => ((touched.current = true), setTime(v))} />
                 <p className="setter-in">Rings in {duration(ringsAt - now)}</p>
               </div>
 
