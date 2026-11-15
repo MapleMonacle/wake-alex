@@ -9,5 +9,6 @@
   },
   "durable_objects": { "bindings": [{ "name": "BED", "class_name": "Bed" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Bed"] }],
+  "ai": { "binding": "AI" },
   "observability": { "enabled": true }
 }

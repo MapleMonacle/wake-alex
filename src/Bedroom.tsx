@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { startAlarm } from "./lib/alarm";
 import { api, clock, duration, ownerKey, people, useBed, useNow } from "./lib/bed";
 import { ringing, SELF } from "./lib/types";
-import { bark, bestVoice, lineFor } from "./lib/voice";
+import { bestVoice, lineFor, prefetchLine, speakLine, stopSpeaking } from "./lib/voice";
+import { LINE_COUNT } from "./lib/lines";
 import { AppIcon, Phone } from "./Phone";
 import { TimeWheel } from "./TimeWheel";
 
@@ -111,12 +112,16 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       for (let i = 0; !stop; i++) {
         await new Promise((r) => setTimeout(r, 2200)); // let it beep first
         if (stop) break;
-        const line = lineFor(nRef.current, i);
+        const n = nRef.current;
+        const k = i % LINE_COUNT;
+        const line = lineFor(n, k);
+        prefetchLine(n, k); // download the neural voice while the whistle blows
         alarmRef.current?.duck(true);
         await alarmRef.current?.whistle();
         if (stop) break;
         setCaption(line);
-        await bark(line);
+        prefetchLine(nRef.current, (k + 1) % LINE_COUNT); // have the next line ready before we need it
+        await speakLine(n, k);
         if (stop) break;
         alarmRef.current?.duck(false);
         // Let the words linger a moment, then clear them so a caption never contradicts the live count.
@@ -126,7 +131,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
     })();
     return () => {
       stop = true;
-      speechSynthesis.cancel();
+      stopSpeaking();
       setCaption("");
     };
   }, [isRinging]);
@@ -198,7 +203,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       alarmRef.current?.stop();
       alarmRef.current = null;
       setArmed(false);
-      speechSynthesis.cancel();
+      stopSpeaking();
     } catch (e) {
       setError((e as Error).message);
     }

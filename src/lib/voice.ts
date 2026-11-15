@@ -51,20 +51,68 @@ export function bark(text: string) {
   });
 }
 
-// n = everyone he's disappointing, himself included.
-const SOLO = [
-  "Your alarm went off! So far you're only disappointing yourself! That's still one too many!",
-  "Is that a pillow I see? Drop it! Nobody else knows you're failing yet! Fix that!",
-];
-const CROWD = [
-  (n: number) => `Wake up! ${n} people are disappointed in you for sleeping in!`,
-  (n: number) => `On your feet! ${n} people are watching you fail! Live!`,
-  (n: number) => `Did anyone say you could sleep in? ${n} people say no! Move!`,
-  (n: number) => `Move it, move it, move it! ${n} people are waiting on you!`,
-  (n: number) => `${n} people believed in you! That was a mistake! Prove them wrong!`,
-  (n: number) => `Drop the blanket! That's ${n} disappointed people, and every one of them is right!`,
-];
+export { lineFor } from "./lines";
 
-export function lineFor(n: number, i: number) {
-  return n <= 1 ? SOLO[i % SOLO.length] : CROWD[i % CROWD.length](n);
+// ---------------------------------------------------------------------------
+// The neural voice (Deepgram Aura-2 via /api/say), with the browser voice as a fallback.
+// ---------------------------------------------------------------------------
+import { lineFor as line, VOICES, type Voice } from "./lines";
+
+const VOICE_KEY = "clinomania-voice";
+
+export function chosenVoice(): Voice {
+  const fromUrl = new URLSearchParams(location.search).get("voice");
+  try {
+    if (fromUrl && (VOICES as readonly string[]).includes(fromUrl)) localStorage.setItem(VOICE_KEY, fromUrl);
+    const saved = localStorage.getItem(VOICE_KEY);
+    if (saved && (VOICES as readonly string[]).includes(saved)) return saved as Voice;
+  } catch {
+    /* storage blocked */
+  }
+  return VOICES[0];
+}
+
+export const sayUrl = (n: number, i: number, voice: Voice = chosenVoice()) =>
+  `/api/say?n=${n}&i=${i}&voice=${voice}`;
+
+// Start downloading a line early (e.g. while the whistle blows), so it plays instantly.
+const pending = new Map<string, Promise<Blob | null>>();
+export function prefetchLine(n: number, i: number) {
+  const url = sayUrl(n, i);
+  if (!pending.has(url)) {
+    pending.set(
+      url,
+      fetch(url)
+        .then((r) => (r.ok ? r.blob() : null))
+        .catch(() => null),
+    );
+  }
+  return pending.get(url)!;
+}
+
+let current: HTMLAudioElement | null = null;
+export function stopSpeaking() {
+  current?.pause();
+  current = null;
+  speechSynthesis.cancel();
+}
+
+// Speak line i for count n. Neural voice if it arrives within 2.5s, otherwise the browser voice.
+export async function speakLine(n: number, i: number) {
+  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), 2500))]);
+  if (!blob) return bark(line(n, i));
+  const url = URL.createObjectURL(blob);
+  const audio = new Audio(url);
+  current = audio;
+  try {
+    await new Promise<void>((resolve) => {
+      audio.onended = () => resolve();
+      audio.onerror = () => resolve();
+      audio.play().catch(() => resolve());
+      setTimeout(resolve, 15000);
+    });
+  } finally {
+    URL.revokeObjectURL(url);
+    if (current === audio) current = null;
+  }
 }

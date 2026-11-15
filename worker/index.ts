@@ -1,11 +1,46 @@
 import { Hono } from "hono";
 import { DurableObject } from "cloudflare:workers";
 import { personMinutes, ringing, SELF, type BedState, type Woke } from "../src/lib/types";
+import { lineFor, LINE_COUNT, VOICES } from "../src/lib/lines";
 
-type Env = { BED: DurableObjectNamespace<Bed>; OWNER_KEY?: string };
+type Env = { BED: DurableObjectNamespace<Bed>; OWNER_KEY?: string; AI: Ai };
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
 const bed = (env: Env) => env.BED.getByName("alex");
+
+// ---------------------------------------------------------------------------
+// The alarm voice: Deepgram Aura-2 on Workers AI.
+// GET /api/say?n=7&i=2&voice=zeus -> audio/mpeg
+// The server builds the line itself from n and i, so this can't be used to say arbitrary
+// text, and every (voice, line) pair is cached at the edge: repeats cost nothing.
+// ---------------------------------------------------------------------------
+
+
+app.get("/say", async (c) => {
+  const n = Math.max(1, Math.min(9999, Math.trunc(Number(c.req.query("n")) || 1)));
+  const i = Math.max(0, Math.min(LINE_COUNT - 1, Math.trunc(Number(c.req.query("i")) || 0)));
+  const voice = (VOICES as readonly string[]).includes(c.req.query("voice") ?? "") ? c.req.query("voice")! : VOICES[0];
+  const text = lineFor(n, i);
+
+  const cache = caches.default;
+  const key = new Request(`https://say.clinomania/${voice}/${encodeURIComponent(text)}`);
+  const hit = await cache.match(key);
+  if (hit) return hit;
+
+  const out: unknown = await c.env.AI.run("@cf/deepgram/aura-2-en" as never, { text, speaker: voice, encoding: "mp3" } as never);
+  let body: BodyInit;
+  if (out instanceof ReadableStream) body = out;
+  else if (out instanceof Response) body = await out.arrayBuffer();
+  else if (out && typeof out === "object" && "audio" in out && typeof (out as { audio: unknown }).audio === "string") {
+    body = Uint8Array.from(atob((out as { audio: string }).audio), (ch) => ch.charCodeAt(0));
+  } else return c.json({ error: "no audio" }, 502);
+
+  const res = new Response(body, {
+    headers: { "content-type": "audio/mpeg", "cache-control": "public, max-age=604800", "x-line": encodeURIComponent(text) },
+  });
+  c.executionCtx.waitUntil(cache.put(key, res.clone()));
+  return res;
+});
 
 // Only Alex's own device may set the alarm or get up.
 const isOwner = (env: Env, key: string | undefined) => !env.OWNER_KEY || key === env.OWNER_KEY;

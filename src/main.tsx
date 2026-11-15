@@ -4,6 +4,7 @@ import "./styles.css";
 import Public from "./Public";
 import Bedroom from "./Bedroom";
 import { QR } from "./kit/QR";
+import Voices from "./Voices";
 
 // /         everyone: the Disappointment Index
 // /bedroom  Alex's phone (needs ?key= once)
@@ -74,7 +75,7 @@ function Stage() {
 }
 
 const path = location.pathname;
-const Page = path.startsWith("/bedroom") ? Bedroom : path.startsWith("/stage") ? Stage : Public;
+const Page = path.startsWith("/bedroom") ? Bedroom : path.startsWith("/stage") ? Stage : path.startsWith("/voices") ? Voices : Public;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
