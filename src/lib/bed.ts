@@ -6,6 +6,7 @@ export type { BedState };
 const OWNER_KEY_STORE = "wake-alex-owner-key";
 
 export function ownerKey(): string | null {
+  if (typedKey) return typedKey;
   const fromUrl = new URLSearchParams(location.search).get("key");
   try {
     if (fromUrl) localStorage.setItem(OWNER_KEY_STORE, fromUrl);
@@ -15,7 +16,16 @@ export function ownerKey(): string | null {
   }
 }
 
+let typedKey: string | null = null; // the passcode typed on this page (wins over everything)
+
 export function setOwnerKey(key: string | null) {
+  typedKey = key;
+  // Drop any ?key= from the address bar: an old link would otherwise keep sending a stale code.
+  const url = new URL(location.href);
+  if (url.searchParams.has("key")) {
+    url.searchParams.delete("key");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }
   try {
     if (key) localStorage.setItem(OWNER_KEY_STORE, key);
     else localStorage.removeItem(OWNER_KEY_STORE);
