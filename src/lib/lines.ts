@@ -20,6 +20,7 @@ export function lineFor(n: number, i: number) {
   return n <= 1 ? SOLO[i % SOLO.length] : CROWD[i % CROWD.length](n);
 }
 
-// Deepgram Aura-2 male voices to audition at /voices. The first is the default.
-export const VOICES = ["zeus", "orion", "arcas", "atlas", "mars", "jupiter", "hyperion", "apollo", "draco", "orpheus"] as const;
+// Voices to audition at /voices. The first is the default.
+// "maverick" is the ElevenLabs v3 voice (shouting); the rest are Deepgram Aura-2 on Workers AI.
+export const VOICES = ["maverick", "zeus", "orion", "arcas", "atlas", "mars", "jupiter", "hyperion", "apollo", "draco", "orpheus"] as const;
 export type Voice = (typeof VOICES)[number];

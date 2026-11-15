@@ -3,7 +3,7 @@ import { DurableObject } from "cloudflare:workers";
 import { personMinutes, ringing, SELF, type BedState, type Woke } from "../src/lib/types";
 import { lineFor, LINE_COUNT, VOICES } from "../src/lib/lines";
 
-type Env = { BED: DurableObjectNamespace<Bed>; OWNER_KEY?: string; AI: Ai };
+type Env = { BED: DurableObjectNamespace<Bed>; OWNER_KEY?: string; AI: Ai; ELEVENLABS_API_KEY?: string; ELEVENLABS_VOICE_ID?: string };
 
 const app = new Hono<{ Bindings: Env }>().basePath("/api");
 const bed = (env: Env) => env.BED.getByName("alex");
@@ -23,23 +23,75 @@ app.get("/say", async (c) => {
   const text = lineFor(n, i);
 
   const cache = caches.default;
-  const key = new Request(`https://say.clinomania/${voice}/${encodeURIComponent(text)}`);
+  const key = new Request(`https://say.clinomania/v2/${voice}/${encodeURIComponent(text)}`);
   const hit = await cache.match(key);
   if (hit) return hit;
 
-  const out: unknown = await c.env.AI.run("@cf/deepgram/aura-2-en" as never, { text, speaker: voice, encoding: "mp3" } as never);
-  let body: BodyInit;
-  if (out instanceof ReadableStream) body = out;
-  else if (out instanceof Response) body = await out.arrayBuffer();
-  else if (out && typeof out === "object" && "audio" in out && typeof (out as { audio: unknown }).audio === "string") {
-    body = Uint8Array.from(atob((out as { audio: string }).audio), (ch) => ch.charCodeAt(0));
-  } else return c.json({ error: "no audio" }, 502);
+  // Maverick (ElevenLabs) first if asked for; any failure falls through to the Aura voice.
+  let body: BodyInit | null = null;
+  let provider = "aura";
+  if (voice === "maverick") {
+    body = await elevenLabs(c.env, text).catch((e) => (console.error("elevenlabs", e), null));
+    if (body) provider = "elevenlabs";
+  }
+  if (!body) body = await aura(c.env, text, voice === "maverick" ? "zeus" : voice);
+  if (!body) return c.json({ error: "no audio" }, 502);
 
   const res = new Response(body, {
-    headers: { "content-type": "audio/mpeg", "cache-control": "public, max-age=604800", "x-line": encodeURIComponent(text) },
+    headers: {
+      "content-type": "audio/mpeg",
+      "cache-control": "public, max-age=604800",
+      "x-line": encodeURIComponent(text),
+      "x-provider": provider,
+    },
   });
-  c.executionCtx.waitUntil(cache.put(key, res.clone()));
+  // Only cache the voice that was asked for, so a temporary ElevenLabs hiccup isn't stuck in the cache.
+  if (voice !== "maverick" || provider === "elevenlabs") c.executionCtx.waitUntil(cache.put(key, res.clone()));
   return res;
+});
+
+async function aura(env: Env, text: string, speaker: string): Promise<BodyInit | null> {
+  const out: unknown = await env.AI.run("@cf/deepgram/aura-2-en" as never, { text, speaker, encoding: "mp3" } as never);
+  if (out instanceof ReadableStream) return out;
+  if (out instanceof Response) return out.arrayBuffer();
+  if (out && typeof out === "object" && "audio" in out && typeof (out as { audio: unknown }).audio === "string") {
+    return Uint8Array.from(atob((out as { audio: string }).audio), (ch) => ch.charCodeAt(0));
+  }
+  return null;
+}
+
+// ElevenLabs v3: the "[shouts]" audio tag is what makes it a drill sergeant instead of a narrator.
+// Voice: ELEVENLABS_VOICE_ID if set, otherwise the account's voice named "Maverick" (looked up once).
+let maverickId: string | null = null;
+async function elevenLabs(env: Env, text: string): Promise<ArrayBuffer | null> {
+  if (!env.ELEVENLABS_API_KEY) return null;
+  const headers = { "xi-api-key": env.ELEVENLABS_API_KEY, "content-type": "application/json" };
+  const voiceId = env.ELEVENLABS_VOICE_ID ?? maverickId ?? (maverickId = await findVoice(headers, "maverick"));
+  if (!voiceId) throw new Error("no voice named Maverick on this ElevenLabs account");
+  const r = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}?output_format=mp3_44100_128`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ text: `[shouts] ${text}`, model_id: "eleven_v3" }),
+  });
+  if (!r.ok) throw new Error(`elevenlabs ${r.status}: ${(await r.text()).slice(0, 200)}`);
+  return r.arrayBuffer();
+}
+
+async function findVoice(headers: Record<string, string>, name: string): Promise<string | null> {
+  const r = await fetch(`https://api.elevenlabs.io/v2/voices?search=${encodeURIComponent(name)}&page_size=50`, { headers });
+  if (!r.ok) throw new Error(`elevenlabs voices ${r.status}`);
+  const { voices = [] } = (await r.json()) as { voices?: { voice_id: string; name: string }[] };
+  const exact = voices.find((v) => v.name.toLowerCase() === name) ?? voices.find((v) => v.name.toLowerCase().includes(name));
+  return exact?.voice_id ?? null;
+}
+
+// Debug: which ElevenLabs voices this key can see (names only). Owner-only.
+app.get("/voices", async (c) => {
+  if (!isOwner(c.env, c.req.header("x-owner-key") ?? c.req.query("key"))) return c.json({ error: "owner only" }, 403);
+  if (!c.env.ELEVENLABS_API_KEY) return c.json({ elevenlabs: false });
+  const r = await fetch("https://api.elevenlabs.io/v2/voices?page_size=100", { headers: { "xi-api-key": c.env.ELEVENLABS_API_KEY } });
+  const j = (await r.json().catch(() => ({}))) as { voices?: { voice_id: string; name: string }[] };
+  return c.json({ elevenlabs: r.ok, status: r.status, voices: (j.voices ?? []).map((v) => ({ id: v.voice_id, name: v.name })) });
 });
 
 // Only Alex's own device may set the alarm or get up.
