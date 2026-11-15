@@ -53,7 +53,7 @@ export function bark(text: string) {
 
 // n = everyone he's disappointing, himself included.
 const SOLO = [
-  "Your alarm went off! Right now the only one you are disappointing is yourself! That is still one too many! On your feet!",
+  "Your alarm went off! So far you're only disappointing yourself! That's still one too many!",
   "Is that a pillow I see? Drop it! Nobody else knows you're failing yet! Fix that!",
 ];
 const CROWD = [

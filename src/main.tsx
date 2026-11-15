@@ -10,8 +10,23 @@ import Bedroom from "./Bedroom";
 function Stage() {
   return (
     <div className="stage-view">
-      <Bedroom label="Alex's phone" />
-      <Public label="Everyone else's phone" />
+      <div className="stage-cap cap-a">
+        <p className="cap-eyebrow">The bedroom</p>
+        <h2>Alex's phone</h2>
+        <p className="cap-sub">He set an alarm. He meant well.</p>
+      </div>
+      <div className="stage-phone phone-a">
+        <Bedroom staged />
+      </div>
+      <div className="stage-phone phone-b">
+        <Public staged />
+      </div>
+      <div className="stage-cap cap-b">
+        <p className="cap-eyebrow">The public</p>
+        <h2>Everyone else's phone</h2>
+        <p className="cap-sub">One press per person.</p>
+        <p className="cap-url">{location.host}</p>
+      </div>
     </div>
   );
 }
