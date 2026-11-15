@@ -34,7 +34,8 @@ app.get("/say", async (c) => {
     body = await elevenLabs(c.env, text).catch((e) => (console.error("elevenlabs", e), null));
     if (body) provider = "elevenlabs";
   }
-  if (!body) body = await aura(c.env, text, voice === "maverick" ? "zeus" : voice);
+  // Maverick never falls back to a different voice (it would sound like two people); the client skips the line.
+  if (!body && voice !== "maverick") body = await aura(c.env, text, voice);
   if (!body) return c.json({ error: "no audio" }, 502);
 
   const res = new Response(body, {
@@ -109,9 +110,17 @@ app.get("/helped/:id", async (c) => c.json({ helped: await bed(c.env).helped(c.r
 
 app.post("/sleep", async (c) => {
   if (!isOwner(c.env, c.req.header("x-owner-key"))) return c.json({ error: "only Alex can set his alarm" }, 403);
-  const { alarmAt } = await c.req.json<{ alarmAt?: number }>().catch(() => ({ alarmAt: undefined }));
+  const { alarmAt, speaker } = await c.req.json<{ alarmAt?: number; speaker?: string }>().catch(() => ({ alarmAt: undefined, speaker: undefined }));
   if (typeof alarmAt !== "number" || !Number.isFinite(alarmAt)) return c.json({ error: "alarmAt required" }, 400);
-  return c.json(await bed(c.env).sleep(alarmAt));
+  return c.json(await bed(c.env).sleep(alarmAt, typeof speaker === "string" ? speaker.slice(0, 40) : null));
+});
+
+// The device that last tapped "turn the alarm on" becomes the only one that makes sound.
+app.post("/speaker", async (c) => {
+  if (!isOwner(c.env, c.req.header("x-owner-key"))) return c.json({ error: "only Alex's phone can ring" }, 403);
+  const { speaker } = await c.req.json<{ speaker?: string }>().catch(() => ({ speaker: undefined }));
+  if (typeof speaker !== "string" || !speaker) return c.json({ error: "speaker required" }, 400);
+  return c.json(await bed(c.env).claimSpeaker(speaker.slice(0, 40)));
 });
 
 app.post("/awake", async (c) => {
@@ -124,7 +133,7 @@ type Stored = BedState & { people: string[] };
 export class Bed extends DurableObject<Env> {
   private async load(): Promise<Stored> {
     const s = await this.ctx.storage.get<Stored>("bed");
-    return s ?? { asleep: false, alarmAt: null, joins: [], people: [], woke: null };
+    return { speaker: null, ...(s ?? { asleep: false, alarmAt: null, joins: [], people: [], woke: null }) } as Stored;
   }
   private save(s: Stored) {
     return this.ctx.storage.put("bed", s);
@@ -153,11 +162,18 @@ export class Bed extends DurableObject<Env> {
     return (await this.load()).people.includes(id);
   }
 
-  async sleep(alarmAt: number): Promise<BedState> {
+  async sleep(alarmAt: number, speaker: string | null): Promise<BedState> {
     const s = await this.load();
-    const next: Stored = { asleep: true, alarmAt, joins: [], people: [], woke: s.woke };
+    const next: Stored = { asleep: true, alarmAt, joins: [], people: [], woke: s.woke, speaker };
     await this.save(next);
     return this.view(next);
+  }
+
+  async claimSpeaker(speaker: string): Promise<BedState> {
+    const s = await this.load();
+    s.speaker = speaker;
+    await this.save(s);
+    return this.view(s);
   }
 
   async awake(): Promise<BedState> {

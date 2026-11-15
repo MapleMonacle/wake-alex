@@ -47,6 +47,9 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   const seenJoins = useRef<number | null>(null);
 
   const isRinging = !!state && ringing(state, now);
+  // Only one copy of Alex's phone may make sound: the one that set the alarm or last tapped "turn on".
+  const me = useRef(Math.random().toString(36).slice(2, 10)).current;
+  const isSpeaker = armed && !!state?.asleep && state.speaker === me;
 
   // Back on the alarm screen after waking: suggest a minute from now, not the alarm he
   // just woke from (which would read "rings in 23h 59m").
@@ -66,8 +69,17 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
 
   // Start ringing when the alarm time arrives; faster and higher with the crowd.
   useEffect(() => {
-    if (isRinging && armed) alarmRef.current?.start();
-  }, [isRinging, armed]);
+    if (isRinging && isSpeaker) alarmRef.current?.start();
+  }, [isRinging, isSpeaker]);
+  // Another copy took over the sound (or a new night started elsewhere): go quiet here.
+  useEffect(() => {
+    if (armed && state?.asleep && state.speaker !== me) {
+      alarmRef.current?.stop();
+      alarmRef.current = null;
+      stopSpeaking();
+      setArmed(false);
+    }
+  }, [state?.speaker, state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     alarmRef.current?.setLevel(Math.min(1, (n - 1) / 20));
   }, [n, armed]);
@@ -112,13 +124,14 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       nextK.current = 0;
       return;
     }
+    if (!isSpeaker) return;
     const t = setTimeout(() => prefetchLine(nRef.current, nextK.current), 1500);
     return () => clearTimeout(t);
-  }, [n, state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [n, state?.asleep, isSpeaker]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // The voice: whistle, bark the latest number, let the alarm scream, repeat.
   useEffect(() => {
-    if (!isRinging) return;
+    if (!isRinging || !isSpeaker) return;
     let stop = false;
     (async () => {
       for (let i = 0; !stop; i++) {
@@ -147,7 +160,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       stopSpeaking();
       setCaption("");
     };
-  }, [isRinging]);
+  }, [isRinging, isSpeaker]);
 
   // A fresh night starts with a fresh snooze button.
   useEffect(() => {
@@ -194,13 +207,14 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
     alarmRef.current = startAlarm();
     bestVoice();
     setArmed(true);
+    if (state?.asleep) api.claimSpeaker(me).then(accept).catch(() => {});
   }
 
   async function goToSleep(alarmAt: number) {
     setError(null);
     arm();
     try {
-      accept(await api.sleep(alarmAt));
+      accept(await api.sleep(alarmAt, me));
     } catch (e) {
       alarmRef.current?.stop();
       alarmRef.current = null;

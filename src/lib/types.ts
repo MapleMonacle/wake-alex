@@ -4,6 +4,7 @@ export type BedState = {
   alarmAt: number | null; // when the alarm goes off; disappointment starts here
   joins: number[]; // when each other person became disappointed (ms timestamps, ascending)
   woke: Woke | null; // the last time he got up
+  speaker: string | null; // the one device allowed to make sound (so two copies never echo)
 };
 
 export type Woke = {

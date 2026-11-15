@@ -20,7 +20,7 @@ export default function Voices() {
 
   function choose(v: Voice) {
     try {
-      localStorage.setItem("clinomania-voice", v);
+      localStorage.setItem("clinomania-voice-v2", v);
     } catch {
       /* storage blocked: falls back to the default */
     }

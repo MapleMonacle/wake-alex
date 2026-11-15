@@ -33,7 +33,10 @@ export const api = {
       body: JSON.stringify({ id }),
     }),
   helped: (id: string) => call<{ helped: boolean }>(`/api/helped/${encodeURIComponent(id)}`),
-  sleep: (alarmAt: number) => call<BedState>("/api/sleep", { method: "POST", headers: owner(), body: JSON.stringify({ alarmAt }) }),
+  sleep: (alarmAt: number, speaker: string) =>
+    call<BedState>("/api/sleep", { method: "POST", headers: owner(), body: JSON.stringify({ alarmAt, speaker }) }),
+  claimSpeaker: (speaker: string) =>
+    call<BedState>("/api/speaker", { method: "POST", headers: owner(), body: JSON.stringify({ speaker }) }),
   awake: () => call<BedState>("/api/awake", { method: "POST", headers: owner() }),
 };
 
@@ -51,7 +54,8 @@ export function useBed(pollMs = 1000, onChange?: (prev: BedState | null, next: B
       prev.asleep === next.asleep &&
       prev.alarmAt === next.alarmAt &&
       prev.joins.length === next.joins.length &&
-      prev.woke?.at === next.woke?.at
+      prev.woke?.at === next.woke?.at &&
+      prev.speaker === next.speaker
     )
       return;
     prevRef.current = next;

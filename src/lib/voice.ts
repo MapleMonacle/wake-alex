@@ -58,7 +58,7 @@ export { lineFor } from "./lines";
 // ---------------------------------------------------------------------------
 import { lineFor as line, VOICES, type Voice } from "./lines";
 
-const VOICE_KEY = "clinomania-voice";
+const VOICE_KEY = "clinomania-voice-v2"; // v2: older picks (Aura voices) are ignored
 
 export function chosenVoice(): Voice {
   const fromUrl = new URLSearchParams(location.search).get("voice");
@@ -84,7 +84,11 @@ export function prefetchLine(n: number, i: number) {
       url,
       fetch(url)
         .then((r) => (r.ok ? r.blob() : null))
-        .catch(() => null),
+        .catch(() => null)
+        .then((blob) => {
+          if (!blob) pending.delete(url); // failed: allow a retry next time instead of staying silent
+          return blob;
+        }),
     );
   }
   return pending.get(url)!;
@@ -100,10 +104,10 @@ export function stopSpeaking() {
 // Speak line i for count n. Maverick (ElevenLabs v3) takes ~8s to generate, so we wait longer for it
 // (the alarm keeps beeping meanwhile); the faster voices fall back to the browser voice after 2.5s.
 export async function speakLine(n: number, i: number) {
-  const wait = chosenVoice() === "maverick" ? 11000 : 2500;
-  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), wait))]);
-
-  if (!blob) return bark(line(n, i));
+  const maverick = chosenVoice() === "maverick";
+  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), maverick ? 15000 : 2500))]);
+  // Maverick never hands over to another voice: if a line isn't ready, skip it and let the alarm scream.
+  if (!blob) return maverick ? undefined : bark(line(n, i));
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
   current = audio;
