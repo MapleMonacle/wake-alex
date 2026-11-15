@@ -97,9 +97,12 @@ export function stopSpeaking() {
   speechSynthesis.cancel();
 }
 
-// Speak line i for count n. Neural voice if it arrives within 2.5s, otherwise the browser voice.
+// Speak line i for count n. Maverick (ElevenLabs v3) takes ~8s to generate, so we wait longer for it
+// (the alarm keeps beeping meanwhile); the faster voices fall back to the browser voice after 2.5s.
 export async function speakLine(n: number, i: number) {
-  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), 2500))]);
+  const wait = chosenVoice() === "maverick" ? 11000 : 2500;
+  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), wait))]);
+
   if (!blob) return bark(line(n, i));
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);

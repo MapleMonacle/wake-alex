@@ -43,6 +43,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   const [armed, setArmed] = useState(false); // is there an AudioContext, created from a tap?
   const alarmRef = useRef<Alarm | null>(null);
   const nRef = useRef(SELF);
+  const nextK = useRef(0); // which line the voice will say next
   const seenJoins = useRef<number | null>(null);
 
   const isRinging = !!state && ringing(state, now);
@@ -104,6 +105,17 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
     }
   }, [state?.joins.length, state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Get the next line generating as soon as the count settles (also before the alarm, so the
+  // first line is ready the moment it rings). Debounced so a burst of presses costs one request.
+  useEffect(() => {
+    if (!state?.asleep) {
+      nextK.current = 0;
+      return;
+    }
+    const t = setTimeout(() => prefetchLine(nRef.current, nextK.current), 1500);
+    return () => clearTimeout(t);
+  }, [n, state?.asleep]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // The voice: whistle, bark the latest number, let the alarm scream, repeat.
   useEffect(() => {
     if (!isRinging) return;
@@ -114,6 +126,7 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
         if (stop) break;
         const n = nRef.current;
         const k = i % LINE_COUNT;
+        nextK.current = (k + 1) % LINE_COUNT;
         const line = lineFor(n, k);
         prefetchLine(n, k); // download the neural voice while the whistle blows
         alarmRef.current?.duck(true);
