@@ -4,7 +4,7 @@ import { startAlarm } from "./lib/alarm";
 import { api, clock, duration, ownerKey, people, useBed, useNow } from "./lib/bed";
 import { ringing, SELF } from "./lib/types";
 import { bestVoice, lineFor, prefetchLine, speakLine, stopSpeaking } from "./lib/voice";
-import { LINE_COUNT } from "./lib/lines";
+import { LINE_COUNT, SNOOZE_COUNT, snoozeLine } from "./lib/lines";
 import { AppIcon, Phone } from "./Phone";
 import { TimeWheel } from "./TimeWheel";
 
@@ -40,6 +40,10 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   const [caption, setCaption] = useState("");
   const [banners, setBanners] = useState<Banner[]>([]);
   const [snoozeNo, setSnoozeNo] = useState(0);
+  const snoozeNoRef = useRef(0);
+  const snoozeToken = useRef(0);
+  const snoozing = useRef(false); // a snooze line is being yelled: the loop leaves the alarm ducked and the caption alone
+  snoozeNoRef.current = snoozeNo;
   const [armed, setArmed] = useState(false); // is there an AudioContext, created from a tap?
   const alarmRef = useRef<Alarm | null>(null);
   const nRef = useRef(SELF);
@@ -125,7 +129,10 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
       return;
     }
     if (!isSpeaker) return;
-    const t = setTimeout(() => prefetchLine(nRef.current, nextK.current), 1500);
+    const t = setTimeout(() => {
+      prefetchLine(nRef.current, nextK.current);
+      prefetchLine(nRef.current, snoozeNoRef.current % SNOOZE_COUNT, "snooze"); // so a snooze gets an instant answer
+    }, 1500);
     return () => clearTimeout(t);
   }, [n, state?.asleep, isSpeaker]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -149,10 +156,10 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
         prefetchLine(nRef.current, (k + 1) % LINE_COUNT); // have the next line ready before we need it
         await speakLine(n, k);
         if (stop) break;
-        alarmRef.current?.duck(false);
+        if (!snoozing.current) alarmRef.current?.duck(false);
         // Let the words linger a moment, then clear them so a caption never contradicts the live count.
         await new Promise((r) => setTimeout(r, 1200));
-        if (!stop) setCaption("");
+        if (!stop && !snoozing.current) setCaption("");
       }
     })();
     return () => {
@@ -237,12 +244,28 @@ export default function Bedroom({ staged }: { staged?: boolean }) {
   }
 
   function snooze() {
+    const press = snoozeNo; // which snooze line to yell (one per press, in turn)
     setSnoozeNo((s) => s + 1);
     try {
       navigator.vibrate?.([60, 50, 60]);
     } catch {
       /* not supported */
     }
+    if (!isSpeaker) return;
+    // Cut off whatever is being said and yell about the snooze right now.
+    const k = press % SNOOZE_COUNT;
+    const n = nRef.current;
+    snoozing.current = true;
+    stopSpeaking();
+    alarmRef.current?.duck(true);
+    setCaption(snoozeLine(n, k));
+    const token = ++snoozeToken.current;
+    void speakLine(n, k, "snooze").then(() => {
+      if (token !== snoozeToken.current) return; // a newer snooze took over
+      snoozing.current = false;
+      alarmRef.current?.duck(false);
+      prefetchLine(nRef.current, (k + 1) % SNOOZE_COUNT, "snooze"); // the next press is instant too
+    });
   }
 
   useEffect(() => {

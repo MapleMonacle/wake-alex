@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { DurableObject } from "cloudflare:workers";
 import { personMinutes, ringing, SELF, type BedState, type Woke } from "../src/lib/types";
-import { lineFor, LINE_COUNT, VOICES } from "../src/lib/lines";
+import { LINE_COUNT, SNOOZE_COUNT, textFor, VOICES, type LineKind } from "../src/lib/lines";
 
 type Env = { BED: DurableObjectNamespace<Bed>; OWNER_KEY?: string; AI: Ai; ELEVENLABS_API_KEY?: string; ELEVENLABS_VOICE_ID?: string };
 
@@ -17,10 +17,12 @@ const bed = (env: Env) => env.BED.getByName("alex");
 
 
 app.get("/say", async (c) => {
+  const kind: LineKind = c.req.query("kind") === "snooze" ? "snooze" : "line";
+  const max = kind === "snooze" ? SNOOZE_COUNT : LINE_COUNT;
   const n = Math.max(1, Math.min(9999, Math.trunc(Number(c.req.query("n")) || 1)));
-  const i = Math.max(0, Math.min(LINE_COUNT - 1, Math.trunc(Number(c.req.query("i")) || 0)));
+  const i = Math.max(0, Math.min(max - 1, Math.trunc(Number(c.req.query("i")) || 0)));
   const voice = (VOICES as readonly string[]).includes(c.req.query("voice") ?? "") ? c.req.query("voice")! : VOICES[0];
-  const text = lineFor(n, i);
+  const text = textFor(kind, n, i);
 
   const cache = caches.default;
   const key = new Request(`https://say.clinomania/v2/${voice}/${encodeURIComponent(text)}`);

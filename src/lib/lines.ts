@@ -20,6 +20,21 @@ export function lineFor(n: number, i: number) {
   return n <= 1 ? SOLO[i % SOLO.length] : CROWD[i % CROWD.length](n);
 }
 
+// What the alarm yells when he hits Snooze. Picked in turn, one per press.
+const SNOOZE = [
+  (n: number) => (n <= 1 ? "Snooze? Denied! Even you don't believe in you!" : `Snooze? Denied! ${n} people said no!`),
+  (n: number) =>
+    n <= 1 ? "Nice try! There is no snooze button! Get up!" : `Nice try! There is no snooze button! ${n} people are watching!`,
+  () => "You pressed snooze? You don't get a snooze! You get up!",
+  (n: number) =>
+    n <= 1 ? "Snooze again and I tell everyone!" : `Snooze again and I tell everyone! Oh wait, ${n} people already know!`,
+];
+export const SNOOZE_COUNT = SNOOZE.length;
+export const snoozeLine = (n: number, i: number) => SNOOZE[i % SNOOZE.length](n);
+
+export type LineKind = "line" | "snooze";
+export const textFor = (kind: LineKind, n: number, i: number) => (kind === "snooze" ? snoozeLine(n, i) : lineFor(n, i));
+
 // Voices to audition at /voices. The first is the default.
 // "maverick" is the ElevenLabs v3 voice (shouting); the rest are Deepgram Aura-2 on Workers AI.
 export const VOICES = ["maverick", "zeus", "orion", "arcas", "atlas", "mars", "jupiter", "hyperion", "apollo", "draco", "orpheus"] as const;

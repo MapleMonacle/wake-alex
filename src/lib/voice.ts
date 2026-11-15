@@ -56,7 +56,7 @@ export { lineFor } from "./lines";
 // ---------------------------------------------------------------------------
 // The neural voice (Deepgram Aura-2 via /api/say), with the browser voice as a fallback.
 // ---------------------------------------------------------------------------
-import { lineFor as line, VOICES, type Voice } from "./lines";
+import { textFor, VOICES, type LineKind, type Voice } from "./lines";
 
 const VOICE_KEY = "clinomania-voice-v2"; // v2: older picks (Aura voices) are ignored
 
@@ -72,13 +72,13 @@ export function chosenVoice(): Voice {
   return VOICES[0];
 }
 
-export const sayUrl = (n: number, i: number, voice: Voice = chosenVoice()) =>
-  `/api/say?n=${n}&i=${i}&voice=${voice}`;
+export const sayUrl = (n: number, i: number, voice: Voice = chosenVoice(), kind: LineKind = "line") =>
+  `/api/say?n=${n}&i=${i}&voice=${voice}${kind === "snooze" ? "&kind=snooze" : ""}`;
 
 // Start downloading a line early (e.g. while the whistle blows), so it plays instantly.
 const pending = new Map<string, Promise<Blob | null>>();
-export function prefetchLine(n: number, i: number) {
-  const url = sayUrl(n, i);
+export function prefetchLine(n: number, i: number, kind: LineKind = "line") {
+  const url = sayUrl(n, i, chosenVoice(), kind);
   if (!pending.has(url)) {
     pending.set(
       url,
@@ -94,25 +94,38 @@ export function prefetchLine(n: number, i: number) {
   return pending.get(url)!;
 }
 
-let current: HTMLAudioElement | null = null;
+// One voice at a time: lines queue up behind each other, and stopSpeaking() cuts the current one
+// off cleanly (which also lets the next queued line start), so nothing ever overlaps.
+let current: { audio: HTMLAudioElement; done: () => void } | null = null;
+let queue: Promise<void> = Promise.resolve();
+
 export function stopSpeaking() {
-  current?.pause();
-  current = null;
+  if (current) {
+    current.audio.pause();
+    current.done();
+    current = null;
+  }
   speechSynthesis.cancel();
 }
 
-// Speak line i for count n. Maverick (ElevenLabs v3) takes ~8s to generate, so we wait longer for it
-// (the alarm keeps beeping meanwhile); the faster voices fall back to the browser voice after 2.5s.
-export async function speakLine(n: number, i: number) {
+// Speak a line for count n. Maverick (ElevenLabs v3) takes ~2-8s to generate, so we wait up to 15s
+// for it (the alarm keeps beeping meanwhile); other voices fall back to the browser voice after 2.5s.
+export function speakLine(n: number, i: number, kind: LineKind = "line") {
+  const run = queue.then(() => speakNow(n, i, kind));
+  queue = run.catch(() => {});
+  return run;
+}
+
+async function speakNow(n: number, i: number, kind: LineKind) {
   const maverick = chosenVoice() === "maverick";
-  const blob = await Promise.race([prefetchLine(n, i), new Promise<null>((r) => setTimeout(() => r(null), maverick ? 15000 : 2500))]);
+  const blob = await Promise.race([prefetchLine(n, i, kind), new Promise<null>((r) => setTimeout(() => r(null), maverick ? 15000 : 2500))]);
   // Maverick never hands over to another voice: if a line isn't ready, skip it and let the alarm scream.
-  if (!blob) return maverick ? undefined : bark(line(n, i));
+  if (!blob) return maverick ? undefined : bark(textFor(kind, n, i));
   const url = URL.createObjectURL(blob);
   const audio = new Audio(url);
-  current = audio;
   try {
     await new Promise<void>((resolve) => {
+      current = { audio, done: resolve };
       audio.onended = () => resolve();
       audio.onerror = () => resolve();
       audio.play().catch(() => resolve());
@@ -120,6 +133,6 @@ export async function speakLine(n: number, i: number) {
     });
   } finally {
     URL.revokeObjectURL(url);
-    if (current === audio) current = null;
+    if (current?.audio === audio) current = null;
   }
 }
